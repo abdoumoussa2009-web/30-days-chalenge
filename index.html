@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -60,12 +59,12 @@
         
         <br>
         <h4>الوجبات الأساسية (من خطة 30 يوم):</h4>
-        <label><input type="checkbox" class="preset-food" data-cal="660" data-p="124" data-c="0" data-f="10"> 400 غرام سكالوب / صدور دجاج</label>
-        <label><input type="checkbox" class="preset-food" data-cal="340" data-p="28" data-c="2" data-f="20"> 6 بيضات (4 كاملة + 2 بياض)</label>
-        <label><input type="checkbox" class="preset-food" data-cal="190" data-p="4" data-c="42" data-f="0.5"> 150 غرام أرز مطبوخ</label>
-        <label><input type="checkbox" class="preset-food" data-cal="80" data-p="3" data-c="15" data-f="1"> 400 غرام سلطة خضراء</label>
-        <label><input type="checkbox" class="tracker"> شرب 3 إلى 4 لترات ماء 💧</label>
-        <label><input type="checkbox" class="tracker"> الامتناع عن السكر والخبز الأبيض 🚫</label>
+        <label><input type="checkbox" class="preset-food" id="preset1" data-cal="660" data-p="124" data-c="0" data-f="10"> 400 غرام سكالوب / صدور دجاج</label>
+        <label><input type="checkbox" class="preset-food" id="preset2" data-cal="340" data-p="28" data-c="2" data-f="20"> 6 بيضات (4 كاملة + 2 بياض)</label>
+        <label><input type="checkbox" class="preset-food" id="preset3" data-cal="190" data-p="4" data-c="42" data-f="0.5"> 150 غرام أرز مطبوخ</label>
+        <label><input type="checkbox" class="preset-food" id="preset4" data-cal="80" data-p="3" data-c="15" data-f="1"> 400 غرام سلطة خضراء</label>
+        <label><input type="checkbox" class="tracker" id="trackWater"> شرب 3 إلى 4 لترات ماء 💧</label>
+        <label><input type="checkbox" class="tracker" id="trackNoSugar"> الامتناع عن السكر والخبز الأبيض 🚫</label>
 
         <button class="secondary" onclick="clearPresetFoods()">إلغاء تحديد الوجبات المثبتة 🔄</button>
 
@@ -98,9 +97,9 @@
     <!-- جدول التمارين والنوم -->
     <div class="card">
         <h3>🏋️ التمارين والنوم اليومي</h3>
-        <label><input type="checkbox" class="tracker"> الكارديو (سباحة + نط حبل / جري 5كم)</label>
-        <label><input type="checkbox" class="tracker"> التمارين المنزلية (ضغط، سكوات، بلانك، إلخ)</label>
-        <label><input type="checkbox" class="tracker"> النوم لمدة 8 ساعات كاملة 😴</label>
+        <label><input type="checkbox" class="tracker" id="trackCardio"> الكارديو (سباحة + نط حبل / جري 5كم)</label>
+        <label><input type="checkbox" class="tracker" id="trackHomeWorkout"> التمارين المنزلية (ضغط، سكوات، بلانك، إلخ)</label>
+        <label><input type="checkbox" class="tracker" id="trackSleep"> النوم لمدة 8 ساعات كاملة 😴</label>
     </div>
 
     <!-- تسجيل الوزن والقياسات والرسم البياني -->
@@ -165,7 +164,7 @@
         document.getElementById('daysLeft').innerText = daysLeft;
         document.getElementById('challengeProgress').style.width = `${((30 - daysLeft) / 30) * 100}%`;
 
-        // قاعدة بيانات المغذيات لأطعمتك المحددة (لكل 100g أو بالحبة)
+        // قاعدة بيانات المغذيات
         const db = {
             chicken: { name: 'سكالوب / صدور دجاج', cal: 165, p: 31, c: 0, f: 3.6, unit: 'جرام' },
             egg: { name: 'بيضة كاملة', cal: 70, p: 6, c: 0.5, f: 5, unit: 'حبة' },
@@ -178,15 +177,24 @@
             salad: { name: 'سلطة خضراء', cal: 20, p: 1, c: 4, f: 0.2, unit: 'جرام' }
         };
 
-        let customItems = [];
+        let customItems = JSON.parse(localStorage.getItem('customItems')) || [];
 
-        // حساب الوجبات المثبتة
-        document.querySelectorAll('.preset-food').forEach(cb => {
-            cb.addEventListener('change', updateNutritionTotals);
+        // تحميل وتحفظ حالات الخانات السابقة (Checkboxes)
+        document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+            const savedState = localStorage.getItem(cb.id);
+            if (savedState === 'true') cb.checked = true;
+
+            cb.addEventListener('change', () => {
+                if (cb.id) localStorage.setItem(cb.id, cb.checked);
+                updateNutritionTotals();
+            });
         });
 
         function clearPresetFoods() {
-            document.querySelectorAll('.preset-food').forEach(cb => cb.checked = false);
+            document.querySelectorAll('.preset-food').forEach(cb => {
+                cb.checked = false;
+                if (cb.id) localStorage.setItem(cb.id, false);
+            });
             updateNutritionTotals();
         }
 
@@ -210,6 +218,7 @@
             };
 
             customItems.push(newItem);
+            localStorage.setItem('customItems', JSON.stringify(customItems));
             renderCustomItems();
             updateNutritionTotals();
             document.getElementById('customFoodWeight').value = '';
@@ -217,6 +226,7 @@
 
         function removeCustomFood(id) {
             customItems = customItems.filter(i => i.id !== id);
+            localStorage.setItem('customItems', JSON.stringify(customItems));
             renderCustomItems();
             updateNutritionTotals();
         }
@@ -277,19 +287,38 @@
                 chartData.waist.push(waist);
                 localStorage.setItem('chartData', JSON.stringify(chartData));
                 chart.update();
+                document.getElementById('weightInput').value = '';
+                document.getElementById('waistInput').value = '';
             }
         }
 
         function savePhoto(event) {
             const reader = new FileReader();
             reader.onload = function() {
-                const img = document.createElement('img');
-                img.src = reader.result;
-                img.style.cssText = 'width:80px; height:80px; border-radius:8px; object-fit:cover;';
-                document.getElementById('photoGallery').appendChild(img);
+                let savedPhotos = JSON.parse(localStorage.getItem('photos')) || [];
+                savedPhotos.push(reader.result);
+                localStorage.setItem('photos', JSON.stringify(savedPhotos));
+                renderPhotos();
             };
             reader.readAsDataURL(event.target.files[0]);
         }
+
+        function renderPhotos() {
+            const gallery = document.getElementById('photoGallery');
+            gallery.innerHTML = '';
+            let savedPhotos = JSON.parse(localStorage.getItem('photos')) || [];
+            savedPhotos.forEach(src => {
+                const img = document.createElement('img');
+                img.src = src;
+                img.style.cssText = 'width:80px; height:80px; border-radius:8px; object-fit:cover;';
+                gallery.appendChild(img);
+            });
+        }
+
+        // تهيئة وحفظ كل البيانات عند التحميل الأول
+        renderCustomItems();
+        renderPhotos();
+        updateNutritionTotals();
     </script>
 </body>
 </html>
