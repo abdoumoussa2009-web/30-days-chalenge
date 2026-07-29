@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تحدي الـ 30 يوماً لإبراز البطن</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root { --primary: #e63946; --bg: #f8f9fa; --card: #ffffff; --text: #1d3557; }
+        body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
+        .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        h2, h3 { color: var(--primary); margin-top: 0; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        label { display: block; margin: 8px 0; cursor: pointer; }
+        input[type="checkbox"] { transform: scale(1.2); margin-left: 8px; }
+        input[type="number"], input[type="file"] { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
+        .progress-bar { background: #e0e0e0; border-radius: 8px; height: 15px; overflow: hidden; }
+        .progress-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- عداد التحدي -->
+    <div class="card">
+        <h2>تحدي الـ 30 يوماً 🎯</h2>
+        <p>الأيام المتبقية: <strong id="daysLeft">30</strong> / 30</p>
+        <div class="progress-bar"><div class="progress-fill" id="challengeProgress"></div></div>
+    </div>
+
+    <!-- الفصل الغذائي اليومي -->
+    <div class="card">
+        <h3>🥗 النظام الغذائي اليومي (1500-1700 سعرة)</h3>
+        <label><input type="checkbox" class="tracker"> 400 غرام سكالوب دجاج</label>
+        <label><input type="checkbox" class="tracker"> 6 بيضات (4 كاملة + 2 بياض)</label>
+        <label><input type="checkbox" class="tracker"> 100-150 غرام أرز مطبوخ فقط</label>
+        <label><input type="checkbox" class="tracker"> 300-500 غرام سلطة (بدون زيت/ملعقة صغيرة)</label>
+        <label><input type="checkbox" class="tracker"> شرب 3 إلى 4 لترات ماء 💧</label>
+        <label><input type="checkbox" class="tracker"> الامتناع عن السكر، الغازيات، والخبز الأبيض 🚫</label>
+    </div>
+
+    <!-- جدول التمارين والنوم -->
+    <div class="card">
+        <h3>🏋️ التمارين والنوم اليومي</h3>
+        <label><input type="checkbox" class="tracker"> الكارديو (سباحة + نط حبل / جري 5كم)</label>
+        <label><input type="checkbox" class="tracker"> التمارين المنزلية (ضغط، سكوات، بلانك، إلخ)</label>
+        <label><input type="checkbox" class="tracker"> النوم لمدة 8 ساعات كاملة 😴</label>
+    </div>
+
+    <!-- تسجيل الوزن والقياسات -->
+    <div class="card">
+        <h3>📊 المتابعة الأسبوعية الرسم البياني</h3>
+        <div class="grid">
+            <div>
+                <label>الوزن (كغ):</label>
+                <input type="number" id="weightInput" placeholder="00">
+            </div>
+            <div>
+                <label>قياس الخصر (سم):</label>
+                <input type="number" id="waistInput" placeholder="00">
+            </div>
+        </div>
+        <br>
+        <button onclick="addEntry()">تسجيل القراءة</button>
+        <br><br>
+        <canvas id="statsChart"></canvas>
+    </div>
+
+    <!-- الصور الأسبوعية -->
+    <div class="card">
+        <h3>📸 صورة التطور الأسبوعية</h3>
+        <input type="file" id="photoInput" accept="image/*" onchange="savePhoto(event)">
+        <div id="photoGallery" style="margin-top: 10px; display: flex; gap: 10px; overflow-x: auto;"></div>
+    </div>
+
+    <script>
+        // العداد اليومي
+        let startDate = localStorage.getItem('startDate');
+        if (!startDate) {
+            startDate = new Date().toISOString();
+            localStorage.setItem('startDate', startDate);
+        }
+        const diffDays = Math.floor((new Date() - new Date(startDate)) / (1000 * 60 * 60 * 24));
+        const daysLeft = Math.max(0, 30 - diffDays);
+        document.getElementById('daysLeft').innerText = daysLeft;
+        document.getElementById('challengeProgress').style.width = `${((30 - daysLeft) / 30) * 100}%`;
+
+        // الرسم البياني
+        const ctx = document.getElementById('statsChart').getContext('2d');
+        let chartData = JSON.parse(localStorage.getItem('chartData')) || { labels: [], weight: [], waist: [] };
+        
+        const chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [
+                    { label: 'الوزن (كغ)', data: chartData.weight, borderColor: '#e63946', fill: false },
+                    { label: 'الخصر (سم)', data: chartData.waist, borderColor: '#457b9d', fill: false }
+                ]
+            }
+        });
+
+        function addEntry() {
+            const weight = document.getElementById('weightInput').value;
+            const waist = document.getElementById('waistInput').value;
+            if (weight && waist) {
+                const dayLabel = `يوم ${31 - daysLeft}`;
+                chartData.labels.push(dayLabel);
+                chartData.weight.push(weight);
+                chartData.waist.push(waist);
+                localStorage.setItem('chartData', JSON.stringify(chartData));
+                chart.update();
+            }
+        }
+
+        // حفظ الصور أسبوعياً
+        function savePhoto(event) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const gallery = document.getElementById('photoGallery');
+                const img = document.createElement('img');
+                img.src = reader.result;
+                img.style.width = '80px';
+                img.style.height = '80px';
+                img.style.borderRadius = '8px';
+                img.style.objectFit = 'cover';
+                gallery.appendChild(img);
+            };
+            reader.readAsDataURL(event.target.files[0]);
+        }
+    </script>
+</body>
+</html>
