@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -8,28 +7,32 @@
     <meta name="theme-color" content="#e63946">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- إعدادات PWA الرسمية للتثبيت -->
+    <!-- إعدادات PWA للتثبيت -->
     <link rel="manifest" id="manifestPlaceholder">
 
     <style>
-        :root { --primary: #e63946; --bg: #f8f9fa; --card: #ffffff; --text: #1d3557; }
+        :root { --primary: #e63946; --bg: #f8f9fa; --card: #ffffff; --text: #1d3557; --accent: #457b9d; }
         body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
         .card { background: var(--card); border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        h2, h3 { color: var(--primary); margin-top: 0; }
+        h2, h3, h4 { color: var(--primary); margin-top: 0; }
         .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         label { display: block; margin: 8px 0; cursor: pointer; }
         input[type="checkbox"] { transform: scale(1.2); margin-left: 8px; }
-        input[type="number"], input[type="file"] { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
-        button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
-        .progress-bar { background: #e0e0e0; border-radius: 8px; height: 15px; overflow: hidden; }
+        input[type="number"], input[type="text"], input[type="file"], select { width: 100%; padding: 10px; margin-top: 4px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        button.secondary { background: #6c757d; }
+        button.danger { background: #d90429; }
+        .progress-bar { background: #e0e0e0; border-radius: 8px; height: 15px; overflow: hidden; margin-top: 5px; }
         .progress-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s; }
         #installBanner { display: none; background: #1d3557; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
         #installBanner button { background: #e63946; margin-top: 8px; }
+        .macro-badge { display: inline-block; background: #edf2f4; padding: 5px 10px; border-radius: 6px; font-size: 0.9em; margin: 3px; font-weight: bold; }
+        .food-item { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding: 8px 0; }
     </style>
 </head>
 <body>
 
-    <!-- شريط تثبيت مباشر داخل التطبيق -->
+    <!-- شريط تثبيت التطبيق -->
     <div id="installBanner">
         <span>📲 اضغط لتثبيت التطبيق على هاتفك مباشرة!</span>
         <button id="installBtn">تثبيت التطبيق الآن</button>
@@ -42,15 +45,47 @@
         <div class="progress-bar"><div class="progress-fill" id="challengeProgress"></div></div>
     </div>
 
-    <!-- الفصل الغذائي اليومي -->
+    <!-- النظام الغذائي المباشر والمخصص -->
     <div class="card">
-        <h3>🥗 النظام الغذائي اليومي (1500-1700 سعرة)</h3>
-        <label><input type="checkbox" class="tracker"> 400 غرام سكالوب دجاج</label>
-        <label><input type="checkbox" class="tracker"> 6 بيضات (4 كاملة + 2 بياض)</label>
-        <label><input type="checkbox" class="tracker"> 100-150 غرام أرز مطبوخ فقط</label>
-        <label><input type="checkbox" class="tracker"> 300-500 غرام سلطة (بدون زيت/ملعقة صغيرة)</label>
+        <h3>🥗 متابعة النظام الغذائي والسعرات</h3>
+        
+        <h4>الكرامات اليومية والمغذيات الكبرى:</h4>
+        <div>
+            <span class="macro-badge">السعرات: <span id="totalCalories">0</span> / 1600 kcal</span>
+            <span class="macro-badge">البروتين: <span id="totalProtein">0</span>g</span>
+            <span class="macro-badge">الكارب: <span id="totalCarbs">0</span>g</span>
+            <span class="macro-badge">الدهون: <span id="totalFat">0</span>g</span>
+        </div>
+        
+        <br>
+        <h4>الوجبات المثبتة من الخطة:</h4>
+        <label><input type="checkbox" class="preset-food" data-cal="660" data-p="124" data-c="0" data-f="10"> 400 غرام سكالوب دجاج</label>
+        <label><input type="checkbox" class="preset-food" data-cal="340" data-p="28" data-c="2" data-f="20"> 6 بيضات (4 كاملة + 2 بياض)</label>
+        <label><input type="checkbox" class="preset-food" data-cal="190" data-p="4" data-c="42" data-f="0.5"> 150 غرام أرز مطبوخ</label>
+        <label><input type="checkbox" class="preset-food" data-cal="80" data-p="3" data-c="15" data-f="1"> 400 غرام سلطة خضراء</label>
         <label><input type="checkbox" class="tracker"> شرب 3 إلى 4 لترات ماء 💧</label>
-        <label><input type="checkbox" class="tracker"> الامتناع عن السكر، الغازيات، والخبز الأبيض 🚫</label>
+        <label><input type="checkbox" class="tracker"> الامتناع عن السكر والخبز الأبيض 🚫</label>
+
+        <button class="secondary" onclick="clearPresetFoods()">إلغاء تحديد الوجبات المثبتة 🔄</button>
+
+        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+        <h4>إضافة مكون/أكلة مخصصة بالغرام:</h4>
+        <div class="grid">
+            <select id="customFoodSelect">
+                <option value="chicken">صدر دجاج / سكالوب</option>
+                <option value="egg">بيض (حبة كاملة)</option>
+                <option value="egg_white">بياض بيض (حبة)</option>
+                <option value="rice">أرز مطبوخ</option>
+                <option value="salad">سلطة خضراء</option>
+                <option value="oats">شوفان</option>
+                <option value="olive_oil">زيت زيتون (ملعقة)</option>
+            </select>
+            <input type="number" id="customFoodWeight" placeholder="الكمية (جرام أو عدد)">
+        </div>
+        <button onclick="addCustomFood()">إضافة الأكلة وحساب المغذيات ➕</button>
+
+        <div id="customFoodList" style="margin-top: 10px;"></div>
     </div>
 
     <!-- جدول التمارين والنوم -->
@@ -61,9 +96,9 @@
         <label><input type="checkbox" class="tracker"> النوم لمدة 8 ساعات كاملة 😴</label>
     </div>
 
-    <!-- تسجيل الوزن والقياسات -->
+    <!-- تسجيل الوزن والقياسات والرسم البياني -->
     <div class="card">
-        <h3>📊 المتابعة الأسبوعية الرسم البياني</h3>
+        <h3>📊 المتابعة الأسبوعية والرسم البياني</h3>
         <div class="grid">
             <div>
                 <label>الوزن (كغ):</label>
@@ -88,7 +123,7 @@
     </div>
 
     <script>
-        // إنشـاء Manifest ديناميكياً لضمان التثبيت
+        // إعدادات PWA
         const myManifest = {
             "name": "تحدي 30 يوم بطن",
             "short_name": "تحدي البطن",
@@ -96,61 +131,126 @@
             "display": "standalone",
             "background_color": "#f8f9fa",
             "theme_color": "#e63946",
-            "icons": [{
-                "src": "https://cdn-icons-png.flaticon.com/512/2964/2964514.png",
-                "sizes": "512x512",
-                "type": "image/png"
-            }]
+            "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/2964/2964514.png", "sizes": "512x512", "type": "image/png"}]
         };
-        const stringManifest = JSON.stringify(myManifest);
-        const blob = new Blob([stringManifest], {type: 'application/json'});
-        const manifestURL = URL.createObjectURL(blob);
-        document.querySelector('#manifestPlaceholder').setAttribute('href', manifestURL);
+        const blob = new Blob([JSON.stringify(myManifest)], {type: 'application/json'});
+        document.querySelector('#manifestPlaceholder').setAttribute('href', URL.createObjectURL(blob));
 
-        // تسجيل Service Worker
         if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-            `;
-            const swBlob = new Blob([swCode], {type: 'text/javascript'});
-            const swURL = URL.createObjectURL(swBlob);
-            navigator.serviceWorker.register(swURL).catch(() => {});
+            const swCode = `self.addEventListener('install', e => e.waitUntil(self.skipWaiting())); self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));`;
+            navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'text/javascript'}))).catch(() => {});
         }
 
-        // إظهار زر التثبيت تلقائياً عند فتح الصفة
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
+            e.preventDefault(); deferredPrompt = e;
             document.getElementById('installBanner').style.display = 'block';
         });
-
-        document.getElementById('installBtn').addEventListener('click', () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then(() => {
-                    document.getElementById('installBanner').style.display = 'none';
-                    deferredPrompt = null;
-                });
-            }
+        document.getElementById('installBtn')?.addEventListener('click', () => {
+            if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
         });
 
         // العداد اليومي
-        let startDate = localStorage.getItem('startDate');
-        if (!startDate) {
-            startDate = new Date().toISOString();
-            localStorage.setItem('startDate', startDate);
-        }
+        let startDate = localStorage.getItem('startDate') || new Date().toISOString();
+        localStorage.setItem('startDate', startDate);
         const diffDays = Math.floor((new Date() - new Date(startDate)) / (1000 * 60 * 60 * 24));
         const daysLeft = Math.max(0, 30 - diffDays);
         document.getElementById('daysLeft').innerText = daysLeft;
         document.getElementById('challengeProgress').style.width = `${((30 - daysLeft) / 30) * 100}%`;
 
-        // الرسم البياني
+        // قاعدة بيانات المغذيات لكل 100 جرام (أو للحبة)
+        const db = {
+            chicken: { name: 'صدر دجاج', cal: 165, p: 31, c: 0, f: 3.6, unit: 'جرام' },
+            egg: { name: 'بيضة كاملة', cal: 70, p: 6, c: 0.5, f: 5, unit: 'حبة' },
+            egg_white: { name: 'بياض بيضة', cal: 17, p: 3.6, c: 0.2, f: 0.1, unit: 'حبة' },
+            rice: { name: 'أرز مطبوخ', cal: 130, p: 2.7, c: 28, f: 0.3, unit: 'جرام' },
+            salad: { name: 'سلطة خضراء', cal: 20, p: 1, c: 4, f: 0.2, unit: 'جرام' },
+            oats: { name: 'شوفان', cal: 389, p: 16.9, c: 66, f: 6.9, unit: 'جرام' },
+            olive_oil: { name: 'زيت زيتون', cal: 119, p: 0, c: 0, f: 13.5, unit: 'ملعقة' }
+        };
+
+        let currentNutrition = { cal: 0, p: 0, c: 0, f: 0 };
+        let customItems = [];
+
+        // حساب الوجبات المثبتة
+        document.querySelectorAll('.preset-food').forEach(cb => {
+            cb.addEventListener('change', updateNutritionTotals);
+        });
+
+        function clearPresetFoods() {
+            document.querySelectorAll('.preset-food').forEach(cb => cb.checked = false);
+            updateNutritionTotals();
+        }
+
+        function addCustomFood() {
+            const key = document.getElementById('customFoodSelect').value;
+            const amount = parseFloat(document.getElementById('customFoodWeight').value);
+            if (!amount || amount <= 0) return;
+
+            const item = db[key];
+            const factor = (item.unit === 'جرام') ? (amount / 100) : amount;
+
+            const newItem = {
+                id: Date.now(),
+                name: item.name,
+                amount: amount,
+                unit: item.unit,
+                cal: Math.round(item.cal * factor),
+                p: Math.round(item.p * factor * 10) / 10,
+                c: Math.round(item.c * factor * 10) / 10,
+                f: Math.round(item.f * factor * 10) / 10
+            };
+
+            customItems.push(newItem);
+            renderCustomItems();
+            updateNutritionTotals();
+            document.getElementById('customFoodWeight').value = '';
+        }
+
+        function removeCustomFood(id) {
+            customItems = customItems.filter(i => i.id !== id);
+            renderCustomItems();
+            updateNutritionTotals();
+        }
+
+        function renderCustomItems() {
+            const container = document.getElementById('customFoodList');
+            container.innerHTML = '';
+            customItems.forEach(i => {
+                container.innerHTML += `
+                    <div class="food-item">
+                        <span><strong>${i.name}</strong> (${i.amount} ${i.unit}): ${i.cal} kcal | P: ${i.p}g | C: ${i.c}g | F: ${i.f}g</span>
+                        <button class="danger" style="padding: 3px 8px; margin:0;" onclick="removeCustomFood(${i.id})">حذف</button>
+                    </div>
+                `;
+            });
+        }
+
+        function updateNutritionTotals() {
+            let cal = 0, p = 0, c = 0, f = 0;
+
+            // حساب المثبت المحدد
+            document.querySelectorAll('.preset-food:checked').forEach(cb => {
+                cal += parseFloat(cb.dataset.cal);
+                p += parseFloat(cb.dataset.p);
+                c += parseFloat(cb.dataset.c);
+                f += parseFloat(cb.dataset.f);
+            });
+
+            // حساب المخصص
+            customItems.forEach(i => {
+                cal += i.cal; p += i.p; c += i.c; f += i.f;
+            });
+
+            document.getElementById('totalCalories').innerText = Math.round(cal);
+            document.getElementById('totalProtein').innerText = Math.round(p);
+            document.getElementById('totalCarbs').innerText = Math.round(c);
+            document.getElementById('totalFat').innerText = Math.round(f);
+        }
+
+        // الرسم البياني والصور
         const ctx = document.getElementById('statsChart').getContext('2d');
         let chartData = JSON.parse(localStorage.getItem('chartData')) || { labels: [], weight: [], waist: [] };
-        
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
@@ -166,8 +266,7 @@
             const weight = document.getElementById('weightInput').value;
             const waist = document.getElementById('waistInput').value;
             if (weight && waist) {
-                const dayLabel = `يوم ${31 - daysLeft}`;
-                chartData.labels.push(dayLabel);
+                chartData.labels.push(`يوم ${31 - daysLeft}`);
                 chartData.weight.push(weight);
                 chartData.waist.push(waist);
                 localStorage.setItem('chartData', JSON.stringify(chartData));
@@ -175,18 +274,13 @@
             }
         }
 
-        // حفظ الصور أسبوعياً
         function savePhoto(event) {
             const reader = new FileReader();
             reader.onload = function() {
-                const gallery = document.getElementById('photoGallery');
                 const img = document.createElement('img');
                 img.src = reader.result;
-                img.style.width = '80px';
-                img.style.height = '80px';
-                img.style.borderRadius = '8px';
-                img.style.objectFit = 'cover';
-                gallery.appendChild(img);
+                img.style.cssText = 'width:80px; height:80px; border-radius:8px; object-fit:cover;';
+                document.getElementById('photoGallery').appendChild(img);
             };
             reader.readAsDataURL(event.target.files[0]);
         }
