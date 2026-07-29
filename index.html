@@ -1,10 +1,16 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تحدي الـ 30 يوماً لإبراز البطن</title>
+    <meta name="theme-color" content="#e63946">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- إعدادات PWA الرسمية للتثبيت -->
+    <link rel="manifest" id="manifestPlaceholder">
+
     <style>
         :root { --primary: #e63946; --bg: #f8f9fa; --card: #ffffff; --text: #1d3557; }
         body { font-family: system-ui, -apple-system, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 15px; }
@@ -17,9 +23,17 @@
         button { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; font-weight: bold; cursor: pointer; }
         .progress-bar { background: #e0e0e0; border-radius: 8px; height: 15px; overflow: hidden; }
         .progress-fill { background: var(--primary); height: 100%; width: 0%; transition: width 0.3s; }
+        #installBanner { display: none; background: #1d3557; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        #installBanner button { background: #e63946; margin-top: 8px; }
     </style>
 </head>
 <body>
+
+    <!-- شريط تثبيت مباشر داخل التطبيق -->
+    <div id="installBanner">
+        <span>📲 اضغط لتثبيت التطبيق على هاتفك مباشرة!</span>
+        <button id="installBtn">تثبيت التطبيق الآن</button>
+    </div>
 
     <!-- عداد التحدي -->
     <div class="card">
@@ -74,6 +88,54 @@
     </div>
 
     <script>
+        // إنشـاء Manifest ديناميكياً لضمان التثبيت
+        const myManifest = {
+            "name": "تحدي 30 يوم بطن",
+            "short_name": "تحدي البطن",
+            "start_url": "./",
+            "display": "standalone",
+            "background_color": "#f8f9fa",
+            "theme_color": "#e63946",
+            "icons": [{
+                "src": "https://cdn-icons-png.flaticon.com/512/2964/2964514.png",
+                "sizes": "512x512",
+                "type": "image/png"
+            }]
+        };
+        const stringManifest = JSON.stringify(myManifest);
+        const blob = new Blob([stringManifest], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(blob);
+        document.querySelector('#manifestPlaceholder').setAttribute('href', manifestURL);
+
+        // تسجيل Service Worker
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
+                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+            `;
+            const swBlob = new Blob([swCode], {type: 'text/javascript'});
+            const swURL = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swURL).catch(() => {});
+        }
+
+        // إظهار زر التثبيت تلقائياً عند فتح الصفة
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installBanner').style.display = 'block';
+        });
+
+        document.getElementById('installBtn').addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then(() => {
+                    document.getElementById('installBanner').style.display = 'none';
+                    deferredPrompt = null;
+                });
+            }
+        });
+
         // العداد اليومي
         let startDate = localStorage.getItem('startDate');
         if (!startDate) {
